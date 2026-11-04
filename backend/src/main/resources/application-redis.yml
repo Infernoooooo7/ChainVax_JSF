@@ -1,0 +1,8 @@
+# Store the "dashboard" and "unitState" caches in Redis instead of process memory:
+#   --spring.profiles.active=redis      (Redis on localhost:6379, or REDIS_HOST / REDIS_PORT)
+spring:
+  cache:
+    type: redis
+    redis:
+      time-to-live: 60s
+      key-prefix: "chainvax::"

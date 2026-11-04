@@ -1,0 +1,19 @@
+# Build output
+backend/target/
+frontend/dist/
+
+# Dependencies
+frontend/node_modules/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# NOTE: backend/src/main/resources/static/ (the built React UI) is committed on purpose,
+# so the backend can be built and run without Node.js. Rebuild it with: cd frontend && npm run build

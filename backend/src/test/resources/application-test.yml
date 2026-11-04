@@ -1,0 +1,9 @@
+# Integration tests: same real PostgreSQL + Flyway + seed data as the demo, on a random free port,
+# with the background simulator and scheduled workers switched off for deterministic results.
+chainvax:
+  embedded-db:
+    port: 0
+  simulator:
+    auto-start: false
+  worker:
+    enabled: false

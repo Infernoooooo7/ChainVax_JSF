@@ -1,0 +1,71 @@
+# ChainVax - default "demo" configuration.
+# Starts a real PostgreSQL 17 server in-process (zonky embedded-postgres), runs Flyway,
+# seeds a small demo scenario and serves the React UI from /static. No installs needed.
+
+spring:
+  application:
+    name: chainvax
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate          # Flyway owns the schema; Hibernate only validates it
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+      "[org.hibernate.envers.audit_table_suffix]": _aud
+      "[org.hibernate.envers.revision_field_name]": rev
+      "[org.hibernate.envers.revision_type_field_name]": revtype
+  flyway:
+    locations: classpath:db/migration
+  cache:
+    type: simple                  # use the "redis" profile to switch the same caches to Redis
+    cache-names: dashboard,unitState
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      repositories:
+        enabled: false            # Redis is only a cache here; no Redis repositories to scan
+
+server:
+  port: ${CHAINVAX_PORT:8080}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    persist-authorization: true
+
+chainvax:
+  jwt:
+    # HS256 signing key (>= 32 bytes). Demo value only - override with CHAINVAX_JWT_SECRET.
+    secret: ${CHAINVAX_JWT_SECRET:chainvax-demo-only-hs256-secret-change-me-0123456789}
+    issuer: chainvax-demo
+    user-token-ttl: PT8H
+    device-token-ttl: PT12H
+  embedded-db:
+    enabled: true
+    port: 54329
+    data-dir: ""                  # empty = temporary directory
+    clean-on-start: true          # every start = fresh, predictable demo data
+  demo:
+    seed: true
+    tamper-endpoints: true        # demo-only "simulate rogue DB edit" buttons for the ledger
+  simulator:
+    auto-start: true              # posts SIMULATOR readings for every logger on an interval
+    interval: PT10S
+    base-url: ""                  # empty = http://localhost:<running port>
+    device-secret: demo-logger-secret
+  worker:
+    enabled: true
+    reevaluate-interval: PT10S    # @Scheduled re-evaluation of open excursion windows
+    digest-interval: PT5M         # @Scheduled expiry/alert digest
+    expiry-warning-days: 60
+
+logging:
+  level:
+    edu.nmamit.chainvax: INFO

@@ -1,0 +1,32 @@
+# OPTIONAL - not needed for the demo, which runs PostgreSQL in-process (zonky embedded-postgres).
+# Starts an external PostgreSQL 17 and Redis for the "postgres" and "redis" Spring profiles:
+#
+#   docker compose up -d
+#   java -jar backend/target/chainvax.jar --spring.profiles.active=postgres,redis
+#
+# Status: written to match application-postgres.yml / application-redis.yml but NOT run on the
+# development machine (Docker is not installed there). Credentials are local demo values.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: chainvax
+      POSTGRES_USER: chainvax
+      POSTGRES_PASSWORD: chainvax
+    ports:
+      - "5432:5432"
+    volumes:
+      - chainvax-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chainvax -d chainvax"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  chainvax-pg:

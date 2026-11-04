@@ -1,0 +1,11 @@
+# Use an external PostgreSQL server (for example the one in docker-compose.yml)
+# instead of the in-process demo database:  --spring.profiles.active=postgres
+chainvax:
+  embedded-db:
+    enabled: false
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/chainvax}
+    username: ${DB_USER:chainvax}
+    password: ${DB_PASSWORD:chainvax}
