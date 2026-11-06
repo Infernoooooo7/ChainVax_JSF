@@ -24,7 +24,7 @@ What it does:
 
 ## 1. Quick start (Windows)
 
-You need only a **JDK 17 or newer** on `PATH` (this was tested with JDK 25). No PostgreSQL, Redis, Docker or Node.js install is required to run it.
+You need only a **JDK 17 or newer** on `PATH` (this was tested with JDK 25). No PostgreSQL, Redis, Docker or Node.js install is required for the default mode. Docker mode (below) adds real PostgreSQL and Redis containers.
 
 1. Double-click **`start-demo.cmd`**, or run it from a terminal.
    - The first run builds `backend\target\chainvax.jar` with the bundled Maven Wrapper. Internet access is needed once, for the Maven downloads.
@@ -35,6 +35,19 @@ You need only a **JDK 17 or newer** on `PATH` (this was tested with JDK 25). No 
 4. Stop with **Ctrl+C** in the terminal window.
 
 Every start creates a **fresh in-process PostgreSQL 17 database** and re-seeds the demo data, so restarting resets the scenario. Set `CHAINVAX_PORT=9090` to use a different port.
+
+### Docker mode (PostgreSQL + Redis in containers)
+
+With Docker Desktop running, the same launcher can use the brief's full stack: PostgreSQL 17 and Redis 7 from `docker-compose.yml`.
+
+| Command | What happens |
+|---------|--------------|
+| `start-demo.cmd docker` | Starts the containers (waits until healthy), then the app with the `postgres,redis` profiles. Data is **kept** between runs; the seeder skips if data exists. |
+| `start-demo.cmd docker-reset` | Same, but wipes the Docker database first, so you get fresh demo data. |
+| `start-demo.cmd rebuild docker` | Rebuild the jar, then Docker mode. |
+| `docker compose down` (in the project folder) | Stop the containers. Add `-v` to also delete the data. |
+
+The dashboard footer and `GET /api/system/info` show which database and cache are in use (`RedisCacheManager`, `embeddedDatabase: false`).
 
 Manual equivalent:
 
@@ -188,18 +201,16 @@ Each item is in one of three states: **Done and verified** (exercised and checke
 | `@Scheduled` re-evaluation of open excursion windows | Live: PHC logger silenced mid-excursion, worker condemned both batches after 1m 38s (Envers: `system:excursion-worker`); test `silentLoggerCannotHideASustainedExcursionFromTheScheduledWorker` |
 | `@Scheduled` expiry and alert digests | Live: digests generated 5 minutes apart (in-app inbox), including the expiry warning for CVX-BOPV-001 |
 | Caching of unit state and dashboard aggregates | Test `dashboardAggregatesAreCachedUntilSomethingChanges` (same `generatedAt` until a stock issue evicts it); in-memory cache provider |
+| **Redis** caching (`redis` profile) | Docker Redis 7: `cacheProvider = RedisCacheManager`; keys `chainvax::unitState::1` (TTL 60 s) and `chainvax::dashboard::…` created; dashboard key evicted after a status change |
+| External **PostgreSQL** (`postgres` profile) + **Docker** (`docker-compose.yml`) | `start-demo.cmd rebuild docker-reset`: containers healthy, Flyway applied V1+V2 on PostgreSQL 17.11 (Debian image), seeded, ledger valid; transfer appended entry #14 (14 rows confirmed with `psql` inside the container) |
+| **Testcontainers** | `TestcontainersPostgresIntegrationTest` ran against a `postgres:17-alpine` container: migrations, seed and ledger verify passed |
 | Springdoc OpenAPI / Swagger UI | `/v3/api-docs`: 35 paths, `bearerAuth` scheme; `/swagger-ui.html` returns 200 |
 | React + Vite + Tailwind UI | `npm run build` (Vite 8); all 7 pages rendered in Chrome with no console errors; Vite dev server and proxy checked |
-| Maven, JUnit, Mockito | `mvnw.cmd -B -o package`: 29 tests, 0 failures, 1 skipped (see section 6). Mockito is used in `StockServiceTest` |
+| Maven, JUnit, Mockito, Testcontainers | `mvnw.cmd -B -o package`: **29 tests, 0 failures, 0 skipped** with Docker running (see section 6). Mockito is used in `StockServiceTest` |
 
 ### Implemented but not verified
 
-| Item | Why it is not verified |
-|------|------------------------|
-| **Redis** cache provider (`--spring.profiles.active=redis`) | Redis is not installed on the development machine. Code-level check only: cached view records implement `Serializable` for Redis's default JDK serializer. The default demo uses the in-memory cache through the same `@Cacheable` code. |
-| External PostgreSQL (`--spring.profiles.active=postgres`) | No PostgreSQL server is installed. The same Flyway scripts run on the embedded PostgreSQL 17, and the seeder skips if data already exists. |
-| **Testcontainers** test (`TestcontainersPostgresIntegrationTest`) | Docker is not installed, so the test is skipped automatically (`disabledWithoutDocker = true`). |
-| **Docker** (`docker-compose.yml` for postgres and redis) | Docker is not installed; the file was written but not run. |
+Nothing remains in this state now that Docker is installed: Redis, the external PostgreSQL profile, `docker-compose.yml` and the Testcontainers test have all been run (see the table above).
 
 ### Deferred (out of demo scope)
 
@@ -216,7 +227,8 @@ Each item is in one of three states: **Done and verified** (exercised and checke
 |---------|---------|
 | `cd frontend && npm install` | added 75 packages |
 | `cd frontend && npm run build` | Vite 8.3.5: 2433 modules → `backend/src/main/resources/static` |
-| `cd backend && mvnw.cmd -B -o package` | **BUILD SUCCESS. Tests run: 29, Failures: 0, Errors: 0, Skipped: 1** (Testcontainers, no Docker) |
+| `cd backend && mvnw.cmd -B -o package` | Without Docker: 29 run, 0 failures, 1 skipped. **With Docker (6 Nov): Tests run: 29, Failures: 0, Errors: 0, Skipped: 0** |
+| `start-demo.cmd rebuild docker-reset` | Jar rebuilt; containers recreated and healthy; app on PostgreSQL 17.11 (Docker) + Redis; seeded; ledger valid |
 | `java -jar backend/target/chainvax.jar` | Started in 19–35 s (slower the first time); Flyway V1 and V2 applied; "Demo data seeded: 5 users, 3 sites, 3 loggers, 7 batches" |
 | `start-demo.cmd` and `start-demo.cmd rebuild` | Existing jar: started in 18 s. Rebuild: Maven Wrapper build succeeded, then started in 19 s |
 | Rehearsal of section 3 on a fresh start (Chrome) | Every step gave the documented result; no console errors on any of the 7 pages |
@@ -232,7 +244,7 @@ Test classes:
 | `StockServiceTest` | 5 | FEFO and overrides (Mockito) |
 | `DemoScenarioIntegrationTest` | 12 | Full scenario through MockMvc against embedded PostgreSQL |
 | `OptimisticLockingIntegrationTest` | 2 | Concurrent issue |
-| `TestcontainersPostgresIntegrationTest` | 1 | Skipped without Docker |
+| `TestcontainersPostgresIntegrationTest` | 1 | Same scenario on a throw-away `postgres:17-alpine` container (skips only if Docker is unavailable) |
 
 ## 7. Simplifications and assumptions
 
@@ -243,6 +255,7 @@ Test classes:
   - `DEMO-FAST` (heat ≥ 8 °C for 90 s, or cold ≤ −0.5 °C for 60 s, condemns) is labelled demo-only everywhere.
   - `PQS-E006-T1` mirrors the PQS E006/TR06.4 Type 1 logger alarm settings (10 h / 60 min).
   - Both flag AT_RISK as soon as an excursion starts. That grace period is configurable per policy.
+- **Time zone.** The app runs its JVM in UTC (`ChainVaxApplication.main`, and `-Duser.timezone=UTC` for tests). Windows reports India's zone as the legacy id `Asia/Calcutta`, which the PostgreSQL 17 Docker image rejects at connection time.
 - **Clock skew.** Readings more than 2 minutes in the future are rejected (`FUTURE_READING`).
 - **JWT.** HS256 with a symmetric demo key. Tokens are kept in `sessionStorage` by the UI; staff tokens last 8 h and device tokens 12 h.
 - **Build differences from the brief's stack.**
@@ -287,5 +300,5 @@ Repositories reviewed for design (OpenLMIS is AGPL-3.0, so only ideas were taken
 backend/    Spring Boot app (pom.xml, mvnw.cmd), Flyway SQL in src/main/resources/db/migration, tests in src/test
 frontend/   React + Vite + Tailwind source (npm run build → backend/src/main/resources/static)
 docs/       RESEARCH.md - sources reviewed and how they informed the design
-start-demo.cmd, docker-compose.yml (optional, unverified)
+start-demo.cmd (add `docker` for Docker mode), docker-compose.yml (PostgreSQL 17 + Redis 7)
 ```

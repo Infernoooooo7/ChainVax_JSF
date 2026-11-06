@@ -1,11 +1,8 @@
-# OPTIONAL - not needed for the demo, which runs PostgreSQL in-process (zonky embedded-postgres).
-# Starts an external PostgreSQL 17 and Redis for the "postgres" and "redis" Spring profiles:
-#
-#   docker compose up -d
-#   java -jar backend/target/chainvax.jar --spring.profiles.active=postgres,redis
-#
-# Status: written to match application-postgres.yml / application-redis.yml but NOT run on the
-# development machine (Docker is not installed there). Credentials are local demo values.
+# Docker mode: PostgreSQL 17 + Redis 7 for the "postgres" and "redis" Spring profiles.
+# Easiest:  start-demo.cmd docker        (or docker-reset for fresh data)
+# Manually: docker compose up -d --wait
+#           java -jar backend/target/chainvax.jar --spring.profiles.active=postgres,redis
+# Verified on Docker Desktop (engine 29.9.2) on 6 Nov 2026. Credentials are local demo values.
 services:
   postgres:
     image: postgres:17
@@ -27,6 +24,11 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
 volumes:
   chainvax-pg:
