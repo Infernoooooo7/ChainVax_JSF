@@ -38,11 +38,15 @@ Every start creates a **fresh in-process PostgreSQL 17 database** and re-seeds t
 
 ### Docker mode (PostgreSQL + Redis in containers)
 
+To inspect the data with a database tool (DBeaver, pgAdmin, IntelliJ Database): host `localhost`, port `5432`, database `chainvax`, user `chainvax`, password `chainvax` (local demo credentials from `docker-compose.yml`). Or run `docker exec -it chainvax-postgres-1 psql -U chainvax -d chainvax`.
+
 With Docker Desktop running, the same launcher can use the brief's full stack: PostgreSQL 17 and Redis 7 from `docker-compose.yml`.
 
 | Command | What happens |
 |---------|--------------|
-| `start-demo.cmd docker` | Starts the containers (waits until healthy), then the app with the `postgres,redis` profiles. Data is **kept** between runs; the seeder skips if data exists. |
+| `start-demo.cmd` | **Default:** if Docker is running, uses Docker mode automatically; otherwise falls back to the in-process database. |
+| `start-demo.cmd docker` | Forces Docker mode: starts the containers (waits until healthy), then the app with the `postgres,redis` profiles. Data is **kept** between runs; the seeder skips if data exists. |
+| `start-demo.cmd embedded` | Forces the zero-install in-process database (fresh data every start). |
 | `start-demo.cmd docker-reset` | Same, but wipes the Docker database first, so you get fresh demo data. |
 | `start-demo.cmd rebuild docker` | Rebuild the jar, then Docker mode. |
 | `docker compose down` (in the project folder) | Stop the containers. Add `-v` to also delete the data. |

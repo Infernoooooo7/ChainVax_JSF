@@ -1,9 +1,10 @@
 @echo off
 rem ChainVax demo launcher (Windows). Needs only a JDK 17+ on PATH.
-rem   start-demo.cmd                 in-process PostgreSQL + in-memory cache (zero install, fresh data each start)
-rem   start-demo.cmd docker          PostgreSQL 17 + Redis 7 in Docker (docker-compose.yml); data kept between runs
-rem   start-demo.cmd docker-reset    same, but wipes the Docker database first
-rem   start-demo.cmd rebuild         rebuild the jar first (add docker after it to combine: rebuild docker)
+rem   start-demo.cmd                 PostgreSQL 17 + Redis 7 in Docker if Docker is running, else the in-process database
+rem   start-demo.cmd docker          force Docker mode (fails if Docker is not running); data kept between runs
+rem   start-demo.cmd docker-reset    Docker mode with a wiped database (fresh demo data)
+rem   start-demo.cmd embedded        in-process PostgreSQL + in-memory cache (zero install, fresh data each start)
+rem   start-demo.cmd rebuild [mode]  rebuild the jar first, then start in the given mode
 rem First run builds backend\target\chainvax.jar (internet needed once for Maven downloads).
 setlocal
 cd /d "%~dp0backend"
@@ -32,6 +33,11 @@ if not exist target\chainvax.jar (
 )
 
 set PROFILES=
+if "%MODE%"=="" (
+  where docker >nul 2>nul || set "PATH=%LOCALAPPDATA%\Programs\DockerDesktop\resources\bin;%ProgramFiles%\Docker\Docker\resources\bin;%PATH%"
+  docker info >nul 2>nul && set MODE=docker
+)
+if "%MODE%"=="" echo [ChainVax] Docker is not running - using the in-process demo database instead.
 if /i "%MODE%"=="docker" set USE_DOCKER=1
 if /i "%MODE%"=="docker-reset" set USE_DOCKER=1
 if defined USE_DOCKER (
