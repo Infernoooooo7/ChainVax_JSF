@@ -12,7 +12,8 @@ import WarningIcon from '@mui/icons-material/WarningAmber';
 import GavelIcon from '@mui/icons-material/Gavel';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SummarizeIcon from '@mui/icons-material/Summarize';
-import { Admin, Login, LoginForm, Resource, radiantDarkTheme, radiantLightTheme } from 'react-admin';
+import { Admin, Login, LoginForm, Resource, bwDarkTheme, bwLightTheme } from 'react-admin';
+import { deepmerge } from '@mui/utils';
 import { authProvider, dataProvider } from './providers';
 import { Dashboard } from './Dashboard';
 import {
@@ -31,6 +32,11 @@ import {
 } from './masterData';
 import { BatchCreate, BatchEdit, BatchList, BatchShow } from './batches';
 import { DigestList, EventList, IssueList, LedgerList, OverrideList, ReadingList, WindowList } from './records';
+
+// Same look as the staff app: react-admin's built-in B&W theme already uses the Geist font and a neutral
+// black/white palette, matching Watermelon UI's Medesk tokens; only the corner radius is aligned.
+const lightTheme = deepmerge(bwLightTheme, { shape: { borderRadius: 8 } });
+const darkTheme = deepmerge(bwDarkTheme, { shape: { borderRadius: 8 } });
 
 const AdminLoginPage = () => (
   <Login>
@@ -51,8 +57,9 @@ export const App = () => (
     authProvider={authProvider}
     dashboard={Dashboard}
     loginPage={AdminLoginPage}
-    theme={radiantLightTheme}
-    darkTheme={radiantDarkTheme}
+    theme={lightTheme}
+    darkTheme={darkTheme}
+    defaultTheme="light"
     requireAuth
     disableTelemetry
   >

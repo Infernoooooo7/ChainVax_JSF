@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Activity, Inbox, ScrollText, SlidersHorizontal, UserCheck } from 'lucide-react'
 import { api } from '../api'
 import { Alert, Badge, Card, Empty, ErrorAlert, StatusChip, fmtDateTime, fmtDuration, usePoll } from './ui'
+import { ContinuousTabs } from './watermelon/continuous-tabs'
 
 const TABS = [
   { id: 'overrides', label: 'Officer overrides', icon: UserCheck },
@@ -14,13 +15,7 @@ export default function Audit({ session }) {
   const [tab, setTab] = useState('overrides')
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setTab(id)} className={tab === id ? 'btn-primary' : 'btn-secondary'}>
-            <Icon size={14} /> {label}
-          </button>
-        ))}
-      </div>
+      <ContinuousTabs tabs={TABS} value={tab} onChange={setTab} ariaLabel="Audit views" />
       {tab === 'overrides' && <Overrides />}
       {tab === 'events' && <Events />}
       {tab === 'digests' && <Digests session={session} />}
@@ -34,7 +29,7 @@ function Overrides() {
   return (
     <Card title="Overrides - each attributed to the officer who made it" icon={UserCheck} bodyClass="p-0">
       <table className="w-full">
-        <thead className="bg-slate-50">
+        <thead>
           <tr>
             <th className="th">#</th>
             <th className="th">When</th>
@@ -44,7 +39,7 @@ function Overrides() {
             <th className="th">What happened</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
           {(data || []).map((o) => (
             <tr key={o.id}>
               <td className="td font-mono text-xs">{o.id}</td>
@@ -55,10 +50,10 @@ function Overrides() {
               </td>
               <td className="td text-xs">
                 <b>{o.officerUsername}</b>
-                <div className="text-slate-500">{o.officerName}</div>
+                <div className="text-muted-foreground">{o.officerName}</div>
               </td>
               <td className="td text-xs">{o.reason}</td>
-              <td className="td text-xs text-slate-600">{o.details}</td>
+              <td className="td text-xs text-muted-foreground">{o.details}</td>
             </tr>
           ))}
         </tbody>
@@ -73,7 +68,7 @@ function Events() {
   return (
     <Card title="Lifecycle transitions (with location and custodian at the time)" icon={Activity} bodyClass="p-0">
       <table className="w-full">
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
           {(data || []).map((e) => (
             <tr key={e.id}>
               <td className="td text-xs whitespace-nowrap">{fmtDateTime(e.occurredAt)}</td>
@@ -83,9 +78,9 @@ function Events() {
               </td>
               <td className="td text-xs">
                 {e.siteCode} · <b>{e.custodian}</b>
-                <div className="text-slate-400">{e.actor}</div>
+                <div className="text-muted-foreground/80">{e.actor}</div>
               </td>
-              <td className="td text-xs text-slate-600">{e.reason}</td>
+              <td className="td text-xs text-muted-foreground">{e.reason}</td>
             </tr>
           ))}
         </tbody>
@@ -124,14 +119,14 @@ function Digests({ session }) {
       <ErrorAlert error={error} />
       <div className="space-y-3">
         {(data || []).map((d) => (
-          <div key={d.id} className="rounded-lg border border-slate-200 p-3">
+          <div key={d.id} className="rounded-lg border border-border p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-sm font-semibold">{d.headline}</div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-muted-foreground">
                 <Badge>{d.triggerSource}</Badge> {fmtDateTime(d.generatedAt)}
               </div>
             </div>
-            <pre className="mt-2 max-h-56 overflow-auto rounded bg-slate-50 p-2 text-[11px] whitespace-pre-wrap">{d.body}</pre>
+            <pre className="mt-2 max-h-56 overflow-auto rounded bg-muted/60 p-2 text-[11px] whitespace-pre-wrap">{d.body}</pre>
           </div>
         ))}
         {data?.length === 0 && <Empty>The first scheduled digest appears ~30 s after start-up, then every 5 minutes.</Empty>}
@@ -200,7 +195,7 @@ function PolicyCard({ policy, isOfficer, onSaved }) {
       icon={ScrollText}
       actions={policy.demoOnly ? <Badge tone="amber">DEMO ONLY</Badge> : <Badge tone="cyan">reference</Badge>}
     >
-      <p className="text-xs text-slate-600">{policy.basis}</p>
+      <p className="text-xs text-muted-foreground">{policy.basis}</p>
       <div className="mt-2 flex flex-wrap gap-2 text-xs">
         <Badge tone="rose">heat ≥ {policy.heatAlarmC} °C → condemn after {fmtDuration(policy.heatCondemnAfterSeconds)}</Badge>
         <Badge tone="cyan">cold ≤ {policy.coldAlarmC} °C → condemn after {fmtDuration(policy.coldCondemnAfterSeconds)}</Badge>
@@ -213,7 +208,7 @@ function PolicyCard({ policy, isOfficer, onSaved }) {
         )}
       </div>
       {isOfficer && (
-        <form className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 md:grid-cols-5" onSubmit={save}>
+        <form className="mt-3 grid grid-cols-2 gap-2 border-t border-border/60 pt-3 md:grid-cols-5" onSubmit={save}>
           <div>
             <label className="label">Heat alarm °C</label>
             <input className="input" value={form.heatAlarmC} onChange={set('heatAlarmC')} />

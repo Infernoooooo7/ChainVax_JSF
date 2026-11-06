@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Ban, ListOrdered, PackageCheck, PackageMinus, ShieldAlert } from 'lucide-react'
 import { api } from '../api'
 import { Alert, Badge, Card, Empty, ErrorAlert, StatusChip, fmtDateTime, usePoll } from './ui'
+import { StockCard } from './watermelon/stock-card'
 
 export default function Stock({ session }) {
   const user = session.user
@@ -38,8 +39,41 @@ export default function Stock({ session }) {
     reloadBatches()
   }
 
+  // Per-site picture for the Budget Cards: where the vials that passed through each site are now.
+  const today = new Date().toISOString().slice(0, 10)
+  const siteStats = (sites || []).map((s) => {
+    const here = (batches || []).filter((b) => b.siteId === s.id)
+    const vials = (list) => list.reduce((acc, b) => acc + b.vialsOnHand, 0)
+    const expired = (b) => b.expiryDate < today
+    const issuable = vials(here.filter((b) => b.status === 'VIABLE' && !expired(b)))
+    const held = vials(here.filter((b) => b.status === 'AT_RISK' && !expired(b)))
+    const withdrawn = vials(here.filter((b) => b.status === 'CONDEMNED' || expired(b)))
+    const issued = (issues || []).filter((i) => i.siteCode === s.code).reduce((acc, i) => acc + i.vials, 0)
+    return { site: s, onHand: issuable + held + withdrawn, issuable, held, withdrawn, issued, batches: here.length }
+  })
+
   return (
     <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-3">
+        {siteStats.map((st) => (
+          <StockCard
+            key={st.site.id}
+            title={st.site.name}
+            badge={<Badge>{st.site.code}</Badge>}
+            total={st.onHand}
+            unit="vials on hand"
+            caption={`${st.batches} batch(es) here · ${st.issued} vials issued from this site so far`}
+            selected={st.site.id === siteId}
+            onClick={() => setSiteId(st.site.id)}
+            segments={[
+              { label: 'Issuable (FEFO)', value: st.issuable, className: 'bg-viable' },
+              { label: 'Held - at risk', value: st.held, className: 'bg-at-risk' },
+              { label: 'Withdrawn', value: st.withdrawn, className: 'bg-condemned' },
+              { label: 'Issued so far', value: st.issued, className: 'bg-foreground/35' },
+            ]}
+          />
+        ))}
+      </div>
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="label">Site</label>
@@ -69,13 +103,13 @@ export default function Stock({ session }) {
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Issuable stock - first-expiry-first-out order" icon={ListOrdered} bodyClass="p-0">
           <table className="w-full">
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
               {(view?.issuable || []).map((b, i) => (
                 <tr key={b.id}>
-                  <td className="td font-mono text-xs text-slate-400">{i + 1}</td>
+                  <td className="td font-mono text-xs text-muted-foreground/80">{i + 1}</td>
                   <td className="td">
                     <b>{b.batchCode}</b>
-                    <div className="text-[11px] text-slate-500">lot {b.lotNumber}</div>
+                    <div className="text-[11px] text-muted-foreground">lot {b.lotNumber}</div>
                   </td>
                   <td className="td text-xs">exp {b.expiryDate}</td>
                   <td className="td text-xs">{b.vialsOnHand} vials</td>
@@ -91,17 +125,17 @@ export default function Stock({ session }) {
 
         <Card title="Withdrawn - never issuable" icon={Ban} bodyClass="p-0">
           <table className="w-full">
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
               {(view?.withdrawn || []).map((w) => (
-                <tr key={w.batchId} className="bg-rose-50/40">
+                <tr key={w.batchId} className="bg-rose-50/40 dark:bg-rose-500/10">
                   <td className="td">
                     <b>{w.batchCode}</b>
-                    <div className="text-[11px] text-slate-500">exp {w.expiryDate}</div>
+                    <div className="text-[11px] text-muted-foreground">exp {w.expiryDate}</div>
                   </td>
                   <td className="td">
                     <StatusChip status={w.status} />
                   </td>
-                  <td className="td text-xs text-rose-800">{w.reason}</td>
+                  <td className="td text-xs text-rose-800 dark:text-rose-300">{w.reason}</td>
                 </tr>
               ))}
             </tbody>
@@ -117,7 +151,7 @@ export default function Stock({ session }) {
 
       <Card title="Recent stock issues" icon={PackageMinus} bodyClass="p-0">
         <table className="w-full">
-          <thead className="bg-slate-50">
+          <thead>
             <tr>
               <th className="th">When</th>
               <th className="th">Batch</th>
@@ -127,13 +161,13 @@ export default function Stock({ session }) {
               <th className="th">Order</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
             {(issues || []).slice(0, 10).map((i) => (
               <tr key={i.id}>
                 <td className="td text-xs">{fmtDateTime(i.issuedAt)}</td>
                 <td className="td text-xs">
                   <b>{i.batchCode}</b>
-                  <div className="text-slate-500">{i.purpose}</div>
+                  <div className="text-muted-foreground">{i.purpose}</div>
                 </td>
                 <td className="td text-xs">{i.siteCode}</td>
                 <td className="td text-xs">{i.vials}</td>
@@ -169,7 +203,7 @@ function IssueForm({ siteId, product, user, onDone }) {
   }
   return (
     <Card title="Issue vials (FEFO allocator)" icon={PackageCheck}>
-      <p className="mb-3 text-xs text-slate-500">
+      <p className="mb-3 text-xs text-muted-foreground">
         Allowed for storekeepers at their own site and district officers. Uses <code>@Transactional</code> + <code>@Version</code>{' '}
         so two clerks issuing at the same moment cannot over-allocate.
       </p>
@@ -238,7 +272,7 @@ function OverrideForm({ siteId, product, user, batches, onDone }) {
 
   return (
     <Card title="Officer override (bypass FEFO, audited)" icon={ShieldAlert}>
-      <p className="mb-3 text-xs text-slate-500">
+      <p className="mb-3 text-xs text-muted-foreground">
         Only a district officer may choose a specific batch out of FEFO order; the reason is stored against their name. Condemned or
         at-risk stock is refused even with an override.
       </p>

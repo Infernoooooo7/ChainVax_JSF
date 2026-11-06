@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Snowflake, LogIn, ShieldCheck, Truck, Warehouse, ClipboardCheck, Stethoscope } from 'lucide-react'
+import {
+  ClipboardCheck,
+  Link2,
+  LogIn,
+  MoonIcon,
+  ShieldCheck,
+  Snowflake,
+  SunIcon,
+  Thermometer,
+  Truck,
+  Warehouse,
+  KeyRound,
+} from 'lucide-react'
 import { api, login } from '../api'
+import { Button } from '@/components/ui/button'
 import { ErrorAlert, roleLabel } from './ui'
+import { useTheme } from './medesk/theme-provider'
 
 const ROLE_ICONS = {
   STOREKEEPER: Warehouse,
@@ -10,12 +24,21 @@ const ROLE_ICONS = {
   AUDITOR: ClipboardCheck,
 }
 
+const POINTS = [
+  [Thermometer, 'Temperature readings arrive through the same API a real data logger would use (here: a built-in simulator).'],
+  [ShieldCheck, 'Configurable excursion policies move batches VIABLE → AT RISK → CONDEMNED automatically; condemned stock leaves issuable stock.'],
+  [Link2, 'Every custody hand-over is appended to a SHA-256 hash-chained ledger that anyone can verify.'],
+  [KeyRound, 'Spring Security + JWT with four roles; officer overrides are recorded against the officer.'],
+]
+
 export default function Login({ onLogin }) {
   const [users, setUsers] = useState([])
   const [username, setUsername] = useState('officer')
   const [password, setPassword] = useState('demo1234')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const { resolvedTheme, setTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   useEffect(() => {
     api('/api/auth/demo-users', { token: '' }).then(setUsers).catch(() => setUsers([]))
@@ -34,38 +57,58 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950 p-6">
-      <div className="grid w-full max-w-5xl gap-6 md:grid-cols-[1.1fr_1fr]">
-        <div className="flex flex-col justify-center text-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-cyan-500/20 p-2.5 ring-1 ring-cyan-400/40">
-              <Snowflake className="text-cyan-300" size={30} />
+    <div className="flex min-h-full items-center justify-center bg-sidebar p-4 md:p-8">
+      <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-background shadow-xs md:grid-cols-[1.05fr_1fr]">
+        <div className="flex flex-col justify-between gap-8 bg-card p-6 md:p-8">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Snowflake className="size-5" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">ChainVax</h1>
-              <p className="text-sm text-cyan-200/80">Cold-chain custody &amp; excursion ledger for vaccine supply</p>
+            <div className="leading-tight">
+              <div className="text-xl font-medium tracking-tight">ChainVax</div>
+              <div className="text-xs text-muted-foreground">cold-chain ledger · demo</div>
             </div>
           </div>
-          <ul className="mt-8 space-y-3 text-sm text-slate-300">
-            <li>• Temperature readings arrive through the same API a real data logger would use (here: a built-in simulator).</li>
-            <li>• Configurable excursion policies move batches VIABLE → AT RISK → CONDEMNED automatically; condemned stock leaves issuable stock.</li>
-            <li>• Every custody hand-over is appended to a SHA-256 hash-chained ledger that anyone can verify.</li>
-            <li>• Spring Security + JWT with four roles; officer overrides are recorded against the officer.</li>
-          </ul>
-          <p className="mt-8 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+          <div>
+            <h1 className="font-serif text-4xl leading-tight tracking-tight md:text-[2.75rem]">
+              Cold-chain custody &amp; excursion ledger for vaccine supply
+            </h1>
+            <ul className="mt-6 space-y-4">
+              {POINTS.map(([Icon, text]) => (
+                <li key={text} className="flex gap-3 text-sm text-foreground/80">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="pt-1.5">{text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
             Academic demo (NMAMIT, Java &amp; Spring Framework Lab). All sites, batches and readings are simulated demo data; demo
             policy thresholds are illustrative and are not medical guidance.
           </p>
         </div>
 
-        <div className="card p-5">
-          <h2 className="flex items-center gap-2 text-base font-semibold">
-            <Stethoscope size={18} className="text-cyan-700" /> Sign in as a demo user
-          </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            One click signs in. Password for every demo account: <code className="rounded bg-slate-100 px-1">demo1234</code>
-          </p>
-          <div className="mt-4 space-y-2">
+        <div className="p-6 md:p-8">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-medium">Sign in as a demo user</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                One click signs in. Password for every demo account:{' '}
+                <code className="rounded bg-muted px-1 font-mono">demo1234</code>
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            >
+              {isDark ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
+            </Button>
+          </div>
+          <div className="mt-5 space-y-2">
             {users.map((u) => {
               const Icon = ROLE_ICONS[u.role] || ShieldCheck
               return (
@@ -73,25 +116,27 @@ export default function Login({ onLogin }) {
                   key={u.username}
                   disabled={busy}
                   onClick={() => doLogin(u.username, u.password)}
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-left hover:border-cyan-400 hover:bg-cyan-50"
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/60 px-3 py-2.5 text-left transition-colors hover:border-foreground/20 hover:bg-foreground/[0.03] disabled:opacity-60"
                 >
-                  <Icon size={20} className="shrink-0 text-cyan-700" />
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground/80">
+                    <Icon className="size-4.5" />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-sm font-semibold">
+                    <div className="flex items-center gap-2 text-sm font-medium">
                       {u.username}
-                      <span className="rounded bg-slate-100 px-1.5 text-[11px] font-medium text-slate-600">{roleLabel(u.role)}</span>
-                      {u.siteCode && <span className="text-[11px] text-slate-500">@ {u.siteCode}</span>}
+                      <span className="rounded-md bg-muted px-1.5 text-[11px] font-medium text-muted-foreground">{roleLabel(u.role)}</span>
+                      {u.siteCode && <span className="text-[11px] text-muted-foreground">@ {u.siteCode}</span>}
                     </div>
-                    <div className="truncate text-xs text-slate-500">{u.summary}</div>
+                    <div className="truncate text-xs text-muted-foreground">{u.summary}</div>
                   </div>
-                  <LogIn size={16} className="text-slate-400" />
+                  <LogIn size={16} className="text-muted-foreground" />
                 </button>
               )
             })}
-            {users.length === 0 && <p className="text-sm text-slate-500">Demo users unavailable - is the backend running?</p>}
+            {users.length === 0 && <p className="text-sm text-muted-foreground">Demo users unavailable - is the backend running?</p>}
           </div>
           <form
-            className="mt-5 grid grid-cols-[1fr_1fr_auto] items-end gap-2 border-t border-slate-100 pt-4"
+            className="mt-5 grid grid-cols-[1fr_1fr_auto] items-end gap-2 border-t border-border/60 pt-4"
             onSubmit={(e) => {
               e.preventDefault()
               doLogin(username, password)
@@ -112,9 +157,9 @@ export default function Login({ onLogin }) {
           <div className="mt-3">
             <ErrorAlert error={error} title="Sign-in failed" />
           </div>
-          <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+          <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
             Administrator? Accounts and master data are managed in the separate{' '}
-            <a className="font-medium text-cyan-700 hover:underline" href="/admin/">
+            <a className="font-medium text-foreground underline-offset-4 hover:underline" href="/admin/">
               admin console
             </a>
             .

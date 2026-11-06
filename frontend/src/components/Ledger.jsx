@@ -56,7 +56,7 @@ export default function Ledger({ session }) {
             </button>
           }
         >
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             <code>GET /api/ledger/verify</code> recomputes <code>SHA-256(previous_hash + payload)</code> for every entry from the
             stored columns and checks each link, the sequence and the head pointer.
           </p>
@@ -90,7 +90,7 @@ export default function Ledger({ session }) {
         <Card title="Custody ledger (append-only, hash-chained)" icon={Link2} bodyClass="p-0">
           <div className="max-h-[560px] overflow-auto">
             <table className="w-full">
-              <thead className="sticky top-0 bg-slate-50">
+              <thead className="sticky top-0 bg-muted/60">
                 <tr>
                   <th className="th">#</th>
                   <th className="th">When</th>
@@ -100,7 +100,7 @@ export default function Ledger({ session }) {
                   <th className="th">previous_hash → hash</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
                 {(entries || [])
                   .slice()
                   .reverse()
@@ -110,24 +110,24 @@ export default function Ledger({ session }) {
                       onClick={() => setSelectedSeq(e.seq)}
                       className={`cursor-pointer ${
                         brokenSeqs.has(e.seq)
-                          ? 'bg-rose-50'
+                          ? 'bg-rose-50 dark:bg-rose-500/10'
                           : e.seq === newSeq
-                            ? 'bg-emerald-50'
+                            ? 'bg-emerald-50 dark:bg-emerald-500/10'
                             : selected?.seq === e.seq
-                              ? 'bg-cyan-50'
-                              : 'hover:bg-slate-50'
+                              ? 'bg-accent'
+                              : 'hover:bg-foreground/[0.03]'
                       }`}
                     >
                       <td className="td font-mono text-xs">{e.seq}</td>
                       <td className="td text-xs whitespace-nowrap">{fmtDateTime(e.occurredAt)}</td>
                       <td className="td text-xs">
                         <b>{e.batchCode}</b>
-                        <div className="text-slate-500">{e.eventType}</div>
+                        <div className="text-muted-foreground">{e.eventType}</div>
                       </td>
                       <td className="td text-xs">
                         {e.fromSiteCode ? `${e.fromSiteCode} → ` : ''}
                         <b>{e.toSiteCode}</b>
-                        <div className="text-slate-500">
+                        <div className="text-muted-foreground">
                           {e.fromCustodian ? `${e.fromCustodian} → ` : ''}
                           {e.toCustodian}
                         </div>
@@ -138,7 +138,7 @@ export default function Ledger({ session }) {
                       <td className="td">
                         <div className="flex items-center gap-1">
                           <Hash value={e.previousHash} length={8} />
-                          <ArrowRight size={12} className="text-slate-400" />
+                          <ArrowRight size={12} className="text-muted-foreground/80" />
                           <Hash value={e.hash} length={8} />
                         </div>
                       </td>
@@ -215,7 +215,7 @@ function TransferForm({ role, user, batches, sites, staff, onDone }) {
             ))}
           </select>
           {batch && (
-            <div className="mt-1 text-[11px] text-slate-500">
+            <div className="mt-1 text-[11px] text-muted-foreground">
               Currently at <b>{batch.siteCode}</b> with <b>{batch.custodian}</b> · <StatusChip status={batch.status} />
             </div>
           )}
@@ -278,11 +278,11 @@ function TamperControls({ entries, onChange }) {
     onChange()
   }
   return (
-    <div className="mt-4 rounded-lg border border-dashed border-rose-300 bg-rose-50/50 p-3">
-      <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-800">
+    <div className="mt-4 rounded-lg border border-dashed border-rose-300 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 p-3">
+      <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-800 dark:text-rose-300">
         <Bomb size={15} /> Demo only: simulate a rogue database edit
       </div>
-      <p className="mt-1 text-xs text-slate-600">
+      <p className="mt-1 text-xs text-muted-foreground">
         Changes the <code>vials</code> column of one ledger row directly with SQL, bypassing the application. Verification should
         then flag that entry.
       </p>
@@ -301,7 +301,7 @@ function TamperControls({ entries, onChange }) {
           <RotateCcw size={14} /> Restore
         </button>
       </div>
-      {msg && <div className="mt-2 text-xs text-rose-800">{msg}</div>}
+      {msg && <div className="mt-2 text-xs text-rose-800 dark:text-rose-300">{msg}</div>}
     </div>
   )
 }
@@ -321,26 +321,26 @@ function EntryInspector({ entry, entries }) {
       <div className="space-y-3 text-xs">
         <div>
           <div className="label">previous_hash {entry.seq === 1 ? '(genesis = 64 zeros)' : `(= hash of #${entry.seq - 1})`}</div>
-          <code className="block rounded bg-slate-50 p-2 font-mono break-all">{entry.previousHash}</code>
+          <code className="block rounded bg-muted/60 p-2 font-mono break-all">{entry.previousHash}</code>
         </div>
         <div>
           <div className="label">payload (canonical JSON stored with the entry)</div>
-          <code className="block rounded bg-slate-50 p-2 font-mono break-all">{entry.payload}</code>
+          <code className="block rounded bg-muted/60 p-2 font-mono break-all">{entry.payload}</code>
         </div>
         <div>
           <div className="label">stored hash</div>
-          <code className="block rounded bg-slate-50 p-2 font-mono break-all">{entry.hash}</code>
+          <code className="block rounded bg-muted/60 p-2 font-mono break-all">{entry.hash}</code>
         </div>
         <div className="space-y-1.5">
-          <div className={`flex items-center gap-1.5 ${hashOk ? 'text-emerald-700' : 'text-rose-700'}`}>
+          <div className={`flex items-center gap-1.5 ${hashOk ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-300'}`}>
             {hashOk ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
             Recomputed in this browser (Web Crypto): SHA-256(previous_hash + payload) {hashOk ? 'matches' : 'does NOT match'} the stored hash
           </div>
-          <div className={`flex items-center gap-1.5 ${linkOk ? 'text-emerald-700' : 'text-rose-700'}`}>
+          <div className={`flex items-center gap-1.5 ${linkOk ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-300'}`}>
             {linkOk ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
             {entry.seq === 1 ? 'First entry links to the genesis value' : `Links to the hash of entry #${entry.seq - 1}`}
           </div>
-          <div className="text-slate-500">
+          <div className="text-muted-foreground">
             The server check also rebuilds the payload from the stored columns, so an edited column (e.g. <code>vials</code>) is
             caught even if the payload text is untouched. <Badge>stored vials: {entry.vials}</Badge>
           </div>

@@ -36,11 +36,25 @@ You need only a **JDK 17 or newer** on `PATH` (this was tested with JDK 25). No 
 
 Every start creates a **fresh in-process PostgreSQL 17 database** and re-seeds the demo data, so restarting resets the scenario. Set `CHAINVAX_PORT=9090` to use a different port.
 
+### User interface (Watermelon UI)
+
+The staff app reuses the free **Medesk Dashboard** template from [Watermelon UI](https://ui.watermelon.sh/dashboard/medesk-dashboard) ([WatermelonCorp/watermelon-platform](https://github.com/WatermelonCorp/watermelon-platform), MIT). It provides the sidebar and inset content frame, the top bar, metric cards, table and chart styling, the light/dark theme provider and the colour tokens. Its building blocks (sidebar, dropdown menu, avatar, sheet, tooltip) come from [shadcn/ui](https://ui.shadcn.com) (MIT), added with the shadcn CLI. Five Watermelon UI animated components, built on [Motion](https://motion.dev) (MIT), are adapted for ChainVax data:
+
+| Component | Used for |
+|---|---|
+| [Continuous Tabs](https://ui.watermelon.sh/animated-components/continuous-tabs) | Simulator modes per logger (Heat pill red, Freeze pill blue) and the audit-trail views |
+| [Labeled Progress Indicator](https://ui.watermelon.sh/animated-components/labeled-progress-indicator) | Excursion countdown bar. Labels rotate between excursion time, peak temperature and policy; the "condemns in" time stays visible |
+| [Run Widget](https://ui.watermelon.sh/animated-components/run-widget) (its NumberFlow rolling digits) | Dashboard counts and live temperatures. A screen-reader copy of each value is added because NumberFlow draws digits in a shadow DOM |
+| [Budget Card](https://ui.watermelon.sh/animated-components/budget-card) | Stock per site: vials issuable, held at risk, withdrawn and issued |
+| [Inline Toast](https://ui.watermelon.sh/animated-components/inline-toast) | Copy-to-clipboard chips for ledger hashes |
+
+Other packages: Radix UI (MIT), `cn` (MIT), class-variance-authority (Apache-2.0), tw-animate-css (MIT), NumberFlow `@number-flow/react` (MIT), and the Geist, Geist Mono and Instrument Serif fonts via Fontsource (SIL OFL 1.1). The admin console uses react-admin's built-in B&W theme, which has the same Geist font and neutral palette. Use the theme toggle in the top bar (or the account menu) to switch between light and dark.
+
 ### Admin console (separate login)
 
 Open **http://localhost:8080/admin** and sign in as `admin` / `admin1234`. These are demo credentials. To change them, set `CHAINVAX_ADMIN_USER` / `CHAINVAX_ADMIN_PASSWORD` before the first start. The admin account cannot sign in to the staff app, and staff accounts cannot sign in here. They use separate login endpoints (`/api/admin/auth/login` vs `/api/auth/login`) and separate browser sessions.
 
-The console reuses **react-admin 5.15** ([marmelab/react-admin](https://github.com/marmelab/react-admin), MIT) and its own data provider **ra-data-simple-rest** (MIT). The backend implements that provider's REST contract under `/api/admin`: `sort`/`range`/`filter` query parameters and a `Content-Range` header (see `admin/AdminQuery.java`). Lists, forms, search, filters, sorting, paging, CSV export, the login page and the light/dark themes all come from react-admin.
+The console reuses **react-admin 5.15** ([marmelab/react-admin](https://github.com/marmelab/react-admin), MIT) and its own data provider **ra-data-simple-rest** (MIT). The backend implements that provider's REST contract under `/api/admin`: `sort`/`range`/`filter` query parameters and a `Content-Range` header (see `admin/AdminQuery.java`). Lists, forms, search, filters, sorting, paging, CSV export, the login page and the light/dark themes all come from react-admin. Its B&W theme matches the staff app's Medesk look.
 
 | Area | What the admin can do |
 |---|---|

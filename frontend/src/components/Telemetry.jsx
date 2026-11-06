@@ -3,13 +3,39 @@ import { Flame, Pause, Play, Radio, Snowflake, Thermometer, VolumeX, Zap } from 
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api'
 import { Alert, Badge, Card, Empty, ErrorAlert, ExcursionCountdown, SimulatedBadge, StatusChip, fmtTime, usePoll } from './ui'
+import { ContinuousTabs } from './watermelon/continuous-tabs'
+import { AnimatedNumber } from './watermelon/animated-number'
 
+// Simulator modes as Watermelon "Continuous Tabs"; the heat/freeze pills take the alarm colours.
 const MODES = [
-  { mode: 'NORMAL', label: 'Normal 4-6 °C', icon: Thermometer, cls: 'btn-secondary' },
-  { mode: 'HEAT', label: 'Heat excursion', icon: Flame, cls: 'btn-danger' },
-  { mode: 'COLD', label: 'Freeze excursion', icon: Snowflake, cls: 'btn bg-blue-600 text-white hover:bg-blue-700' },
-  { mode: 'SILENT', label: 'Logger silent', icon: VolumeX, cls: 'btn-secondary' },
+  { id: 'NORMAL', label: 'Normal', icon: Thermometer },
+  { id: 'HEAT', label: 'Heat', icon: Flame, pillClassName: 'bg-rose-600 dark:bg-rose-500', activeTextClassName: 'text-white dark:text-white' },
+  { id: 'COLD', label: 'Freeze', icon: Snowflake, pillClassName: 'bg-blue-600 dark:bg-blue-500', activeTextClassName: 'text-white dark:text-white' },
+  { id: 'SILENT', label: 'Silent', icon: VolumeX },
 ]
+const MODE_HELP = {
+  NORMAL: 'Normal: readings stay at 4-6 °C.',
+  HEAT: 'Heat excursion: readings climb above the +8 °C alarm.',
+  COLD: 'Freeze excursion: readings drop below the -0.5 °C alarm.',
+  SILENT: 'Logger silent: no readings are sent (the worker still evaluates open windows).',
+}
+
+// Tooltip in the style of Medesk's ChartTooltip.
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-sm">
+      <p className="mb-1.5 font-medium">{new Date(label).toLocaleTimeString()}</p>
+      <div className="flex items-center justify-between gap-6">
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <span className="size-2 rounded-sm bg-temperature" />
+          simulated reading
+        </span>
+        <span className="font-medium text-foreground">{payload[0].value} °C</span>
+      </div>
+    </div>
+  )
+}
 
 export default function Telemetry({ session }) {
   const canOperate = session.user.role !== 'AUDITOR'
@@ -47,7 +73,7 @@ export default function Telemetry({ session }) {
       </Alert>
 
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-semibold text-slate-700">Auto-simulation:</span>
+        <span className="text-sm font-semibold text-foreground/90">Auto-simulation:</span>
         {sim && (
           <button
             className={sim.autoEnabled ? 'btn-secondary' : 'btn-primary'}
@@ -65,47 +91,51 @@ export default function Telemetry({ session }) {
         {(sim?.devices || []).map((d) => (
           <div
             key={d.deviceCode}
-            className={`card cursor-pointer p-4 ${selected === d.deviceCode ? 'ring-2 ring-cyan-500' : ''}`}
+            className={`card cursor-pointer p-4 transition-shadow ${selected === d.deviceCode ? 'ring-2 ring-foreground/25' : 'hover:ring-1 hover:ring-foreground/10'}`}
             onClick={() => setSelected(d.deviceCode)}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <Radio size={15} className="text-cyan-700" /> {d.deviceCode}
+                <Radio size={15} className="text-foreground/70" /> {d.deviceCode}
               </div>
               <SimulatedBadge />
             </div>
-            <div className="text-[11px] text-slate-500">
+            <div className="text-[11px] text-muted-foreground">
               {d.siteName} · {d.description}
             </div>
             <div className="mt-2 flex items-end justify-between">
               <div
-                className={`text-3xl font-bold ${
-                  Number(d.lastTemperatureC) >= 8 ? 'text-rose-600' : Number(d.lastTemperatureC) <= -0.5 ? 'text-blue-700' : 'text-emerald-700'
+                className={`flex items-baseline gap-1 text-[2rem] leading-none font-medium ${
+                  Number(d.lastTemperatureC) >= 8
+                    ? 'text-rose-600 dark:text-rose-400 dark:text-rose-400'
+                    : Number(d.lastTemperatureC) <= -0.5
+                      ? 'text-blue-700 dark:text-blue-400 dark:text-blue-400'
+                      : 'text-emerald-700 dark:text-emerald-400 dark:text-emerald-400'
                 }`}
               >
-                {d.lastTemperatureC ?? '-'} °C
+                <AnimatedNumber value={d.lastTemperatureC} minDecimals={1} />
+                <span className="text-lg">°C</span>
               </div>
-              <div className="text-right text-[11px] text-slate-500">
+              <div className="text-right text-[11px] text-muted-foreground">
                 mode <b>{d.mode}</b>
                 <div>{fmtTime(d.lastReadingAt)}</div>
               </div>
             </div>
             {canOperate && (
-              <div className="mt-3 grid grid-cols-2 gap-1.5" onClick={(e) => e.stopPropagation()}>
-                {MODES.map(({ mode, label, icon: Icon, cls }) => (
-                  <button
-                    key={mode}
-                    className={`${cls} ${d.mode === mode ? 'ring-2 ring-offset-1 ring-cyan-500' : ''} px-2! text-xs`}
-                    onClick={() => {
-                      setSelected(d.deviceCode)
-                      run(`${d.deviceCode} → ${mode}`, () =>
-                        api(`/api/simulator/devices/${d.deviceCode}/mode`, { method: 'POST', body: { mode } }),
-                      )
-                    }}
-                  >
-                    <Icon size={13} /> {label}
-                  </button>
-                ))}
+              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                <ContinuousTabs
+                  size="sm"
+                  ariaLabel={`Simulator mode for ${d.deviceCode}`}
+                  tabs={MODES}
+                  value={d.mode}
+                  onChange={(mode) => {
+                    setSelected(d.deviceCode)
+                    run(`${d.deviceCode} → ${mode}`, () =>
+                      api(`/api/simulator/devices/${d.deviceCode}/mode`, { method: 'POST', body: { mode } }),
+                    )
+                  }}
+                />
+                <div className="mt-1.5 text-[11px] text-muted-foreground">{MODE_HELP[d.mode]}</div>
               </div>
             )}
           </div>
@@ -138,24 +168,26 @@ export default function Telemetry({ session }) {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: -12 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="t"
                   type="number"
                   domain={['dataMin', 'dataMax']}
                   tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  fontSize={11}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                 />
-                <YAxis domain={[-4, 14]} fontSize={11} unit="°" />
+                <YAxis domain={[-4, 14]} unit="°" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
                 <ReferenceArea y1={2} y2={8} fill="#10b981" fillOpacity={0.08} />
                 <ReferenceLine y={8} stroke="#e11d48" strokeDasharray="4 4" label={{ value: 'heat alarm ≥ 8 °C', fontSize: 10, fill: '#e11d48', position: 'insideTopRight' }} />
                 <ReferenceLine y={-0.5} stroke="#2563eb" strokeDasharray="4 4" label={{ value: 'freeze alarm ≤ -0.5 °C', fontSize: 10, fill: '#2563eb', position: 'insideBottomRight' }} />
-                <Tooltip labelFormatter={(t) => new Date(t).toLocaleTimeString()} formatter={(v) => [`${v} °C`, 'simulated reading']} />
-                <Line type="monotone" dataKey="temp" stroke="#0e7490" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--border)' }} />
+                <Line type="monotone" dataKey="temp" stroke="var(--dashboard-scheduled)" strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-1 text-[11px] text-slate-500">
+          <div className="mt-1 text-[11px] text-muted-foreground">
             Green band: WHO +2 to +8 °C storage range. Dashed lines: PQS E006 Type 1 alarm thresholds. All points are simulated.
           </div>
         </Card>
@@ -164,12 +196,12 @@ export default function Telemetry({ session }) {
           <Card title={`Batches at ${device?.siteCode || '…'}`} icon={Thermometer}>
             <div className="space-y-2">
               {atSite.map((b) => (
-                <div key={b.id} className="rounded-lg border border-slate-100 px-3 py-2">
+                <div key={b.id} className="rounded-lg border border-border/60 px-3 py-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold">{b.batchCode}</span>
                     <StatusChip status={b.status} />
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-muted-foreground">
                     {b.product} · policy {b.policyCode} · custodian {b.custodian}
                   </div>
                   <ExcursionCountdown batch={b} />
@@ -183,7 +215,7 @@ export default function Telemetry({ session }) {
             <ErrorAlert error={error} />
             {result ? (
               <div className="text-sm">
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-muted-foreground">
                   {result.label} · {fmtTime(result.at)}
                 </div>
                 {result.r?.accepted !== undefined ? (
@@ -200,11 +232,11 @@ export default function Telemetry({ session }) {
                         ))}
                       </ul>
                     ) : (
-                      <div className="mt-1 text-xs text-slate-500">No status change from this reading.</div>
+                      <div className="mt-1 text-xs text-muted-foreground">No status change from this reading.</div>
                     )}
                   </>
                 ) : (
-                  <div className="mt-1 text-xs text-slate-500">Simulator updated.</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Simulator updated.</div>
                 )}
               </div>
             ) : (

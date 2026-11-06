@@ -28,7 +28,7 @@ export default function Batches({ session, focusBatchId }) {
       <Card title="Vaccine batches (demo data)" icon={Boxes} bodyClass="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead>
               <tr>
                 <th className="th">Batch</th>
                 <th className="th">Product / lot</th>
@@ -38,32 +38,32 @@ export default function Batches({ session, focusBatchId }) {
                 <th className="th">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
               {(batches || []).map((b) => (
                 <tr
                   key={b.id}
                   onClick={() => setSelected(b.id)}
-                  className={`cursor-pointer ${selected === b.id ? 'bg-cyan-50' : 'hover:bg-slate-50'}`}
+                  className={`cursor-pointer ${selected === b.id ? 'bg-accent' : 'hover:bg-foreground/[0.03]'}`}
                 >
                   <td className="td font-semibold whitespace-nowrap">{b.batchCode}</td>
                   <td className="td">
                     {b.product}
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-muted-foreground">
                       lot {b.lotNumber} · policy {b.policyCode}
                     </div>
                   </td>
                   <td className="td whitespace-nowrap">{b.expiryDate}</td>
                   <td className="td whitespace-nowrap">
                     {b.siteCode}
-                    <div className="text-[11px] text-slate-500">{b.custodian}</div>
+                    <div className="text-[11px] text-muted-foreground">{b.custodian}</div>
                   </td>
                   <td className="td">{b.vialsOnHand}</td>
                   <td className="td">
                     <StatusChip status={b.status} />
                     {b.issuable ? (
-                      <div className="mt-0.5 text-[10px] text-emerald-700">issuable</div>
+                      <div className="mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400">issuable</div>
                     ) : (
-                      <div className="mt-0.5 text-[10px] text-rose-600">not issuable</div>
+                      <div className="mt-0.5 text-[10px] text-rose-600 dark:text-rose-400">not issuable</div>
                     )}
                   </td>
                 </tr>
@@ -121,11 +121,11 @@ function BatchDetail({ id, session }) {
           <Field label="@Version">{b.version}</Field>
           <Field label="Status changed">{fmtDateTime(b.statusChangedAt)}</Field>
         </dl>
-        {b.statusReason && <p className="mt-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">{b.statusReason}</p>}
+        {b.statusReason && <p className="mt-2 rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">{b.statusReason}</p>}
         <ExcursionCountdown batch={b} />
         {isOfficer && b.status === 'AT_RISK' && (
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
+          <div className="mt-3 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-900 dark:text-amber-200">
               <UserCheck size={16} /> Officer release (AT_RISK → VIABLE, recorded against you)
             </div>
             <input className="input mt-2" value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -141,15 +141,15 @@ function BatchDetail({ id, session }) {
       </Card>
 
       <Card title="Lifecycle timeline" icon={ShieldCheck} bodyClass="p-0">
-        <ol className="divide-y divide-slate-100">
+        <ol className="divide-y divide-border/60">
           {data.events.map((e) => (
             <li key={e.id} className="px-4 py-2">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <StatusChip status={e.fromStatus} /> → <StatusChip status={e.toStatus} />
-                <span className="text-xs text-slate-500">{fmtDateTime(e.occurredAt)}</span>
+                <span className="text-xs text-muted-foreground">{fmtDateTime(e.occurredAt)}</span>
                 <Badge>{e.actor}</Badge>
               </div>
-              <div className="mt-0.5 text-xs text-slate-600">
+              <div className="mt-0.5 text-xs text-muted-foreground">
                 at <b>{e.siteCode}</b>, custodian <b>{e.custodian}</b> - {e.reason}
               </div>
             </li>
@@ -160,21 +160,21 @@ function BatchDetail({ id, session }) {
 
       <Card title="Excursion windows" icon={Thermometer} bodyClass="p-0">
         <table className="w-full">
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
             {data.excursions.map((w) => (
               <tr key={w.id}>
                 <td className="td">
                   <Badge tone={w.type === 'HEAT' ? 'rose' : 'cyan'}>{w.type}</Badge>
                 </td>
                 <td className="td text-xs">
-                  {fmtDateTime(w.startedAt)} → {w.open ? <b className="text-rose-600">open</b> : fmtDateTime(w.endedAt)}
-                  <div className="text-slate-500">
+                  {fmtDateTime(w.startedAt)} → {w.open ? <b className="text-rose-600 dark:text-rose-400">open</b> : fmtDateTime(w.endedAt)}
+                  <div className="text-muted-foreground">
                     {w.siteCode} via {w.deviceCode}, custodian {w.custodian}
                   </div>
                 </td>
                 <td className="td text-xs">
                   {fmtDuration(w.durationSeconds)}
-                  <div className="text-slate-500">peak {w.peakTemperatureC} °C</div>
+                  <div className="text-muted-foreground">peak {w.peakTemperatureC} °C</div>
                 </td>
                 <td className="td">{w.outcome && <StatusChip status={w.outcome} />}</td>
               </tr>
@@ -186,14 +186,14 @@ function BatchDetail({ id, session }) {
 
       <Card title="Custody chain for this batch" icon={Link2} bodyClass="p-0">
         <table className="w-full">
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
             {data.custody.map((e) => (
               <tr key={e.seq}>
                 <td className="td font-mono text-xs">#{e.seq}</td>
                 <td className="td text-xs">
                   <b>{e.eventType}</b> {e.fromSiteCode ? `${e.fromSiteCode} → ` : ''}
                   {e.toSiteCode}
-                  <div className="text-slate-500">
+                  <div className="text-muted-foreground">
                     {e.fromCustodian ? `${e.fromCustodian} → ` : ''}
                     {e.toCustodian} · {fmtDateTime(e.occurredAt)}
                   </div>
@@ -212,7 +212,7 @@ function BatchDetail({ id, session }) {
 
       <Card title="Envers revision history (who changed this batch)" icon={History} bodyClass="p-0">
         <table className="w-full">
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
             {(revisions || []).map((r) => (
               <tr key={r.revision}>
                 <td className="td font-mono text-xs">rev {r.revision}</td>
@@ -235,7 +235,7 @@ function BatchDetail({ id, session }) {
 function Field({ label, children }) {
   return (
     <div>
-      <dt className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">{label}</dt>
+      <dt className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{label}</dt>
       <dd className="text-sm">{children}</dd>
     </div>
   )

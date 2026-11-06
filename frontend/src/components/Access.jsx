@@ -93,26 +93,26 @@ export default function Access({ session }) {
     <div className="space-y-5">
       <Card title="Role-based access (enforced on the server with @PreAuthorize + data-level checks)" icon={ShieldCheck} bodyClass="p-0">
         <table className="w-full">
-          <thead className="bg-slate-50">
+          <thead>
             <tr>
               <th className="th">Action</th>
               {ROLES.map((r) => (
-                <th key={r} className={`th text-center ${r === role ? 'bg-cyan-50 text-cyan-800' : ''}`}>
+                <th key={r} className={`th text-center ${r === role ? 'bg-accent text-foreground' : ''}`}>
                   {roleLabel(r)}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/60 [&>tr]:transition-colors [&>tr:hover]:bg-foreground/[0.03]">
             {MATRIX.map(([action, allowed]) => (
               <tr key={action}>
                 <td className="td">{action}</td>
                 {ROLES.map((r) => (
-                  <td key={r} className={`td text-center ${r === role ? 'bg-cyan-50/60' : ''}`}>
+                  <td key={r} className={`td text-center ${r === role ? 'bg-accent' : ''}`}>
                     {allowed.includes(r) ? (
-                      <CheckCircle2 size={16} className="inline text-emerald-600" />
+                      <CheckCircle2 size={16} className="inline text-emerald-600 dark:text-emerald-400" />
                     ) : (
-                      <Lock size={14} className="inline text-slate-300" />
+                      <Lock size={14} className="inline text-muted-foreground/60" />
                     )}
                   </td>
                 ))}
@@ -136,14 +136,14 @@ export default function Access({ session }) {
           stops it before anything changes - so you can see the difference between <b>403 (role denied)</b> and{' '}
           <b>permitted but rejected</b>. Switch users in the sidebar and run again.
         </Alert>
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-border/60">
           {probes({ mr1: {}, dvs: 0 }).map((p) => {
             const r = results[p.label]
             return (
               <li key={p.label} className="flex items-start justify-between gap-3 py-2 text-sm">
                 <code className="text-xs">{p.label}</code>
                 {r ? (
-                  <span className={`flex items-center gap-1 text-right text-xs ${r[0] === 'denied' ? 'text-rose-700' : 'text-emerald-700'}`}>
+                  <span className={`flex items-center gap-1 text-right text-xs ${r[0] === 'denied' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-400'}`}>
                     {r[0] === 'denied' ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
                     {r[1]}
                   </span>

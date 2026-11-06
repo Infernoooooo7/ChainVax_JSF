@@ -1,37 +1,51 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Copy, Info, XCircle } from 'lucide-react'
+import { motion } from 'motion/react'
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { CopyToast } from './watermelon/copy-toast'
+import { LabeledProgress } from './watermelon/labeled-progress'
 
+// Status pills in the style of Medesk's appointment-status chips (dot + label), colours from its palette.
 export const STATUS_STYLES = {
-  VIABLE: 'bg-emerald-100 text-emerald-800 ring-emerald-300',
-  AT_RISK: 'bg-amber-100 text-amber-800 ring-amber-300',
-  CONDEMNED: 'bg-rose-100 text-rose-800 ring-rose-300',
+  VIABLE: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 [--dot:var(--color-viable)]',
+  AT_RISK: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 [--dot:var(--color-at-risk)]',
+  CONDEMNED: 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 [--dot:var(--color-condemned)]',
 }
 
 export function StatusChip({ status, large = false }) {
   if (!status) return null
   return (
     <span
-      className={`inline-flex items-center rounded-full font-semibold ring-1 ${large ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs'} ${
-        STATUS_STYLES[status] || 'bg-slate-100 text-slate-700 ring-slate-300'
-      }`}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border font-medium whitespace-nowrap',
+        large ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs',
+        STATUS_STYLES[status] || 'border-border bg-muted text-muted-foreground [--dot:var(--color-muted-foreground)]',
+      )}
     >
+      <span className="size-1.5 shrink-0 rounded-full bg-(--dot)" />
       {status.replace('_', ' ')}
     </span>
   )
 }
 
 const TONES = {
-  slate: 'bg-slate-100 text-slate-700',
-  cyan: 'bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200',
-  violet: 'bg-violet-50 text-violet-800 ring-1 ring-violet-200',
-  amber: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200',
-  rose: 'bg-rose-50 text-rose-800 ring-1 ring-rose-200',
-  emerald: 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200',
+  slate: 'bg-muted text-muted-foreground',
+  cyan: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  violet: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+  amber: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  rose: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  emerald: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
 }
 
 export function Badge({ children, tone = 'slate', className = '' }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${TONES[tone]} ${className}`}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap',
+        TONES[tone] ?? TONES.slate,
+        className,
+      )}
+    >
       {children}
     </span>
   )
@@ -41,59 +55,53 @@ export function SimulatedBadge() {
   return <Badge tone="violet">SIMULATED</Badge>
 }
 
-export function Card({ title, icon: Icon, actions, children, className = '', bodyClass = 'p-4' }) {
+// Medesk "DashboardCard" + "CardHeader": borderless soft card, medium-weight title, actions on the right.
+export function Card({ title, icon: Icon, actions, children, className = '', bodyClass }) {
+  const hasHeader = Boolean(title || actions)
   return (
-    <section className={`card ${className}`}>
-      {(title || actions) && (
-        <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            {Icon && <Icon size={16} className="text-cyan-700" />}
-            {title}
+    <section className={cn('card min-w-0', className)}>
+      {hasHeader && (
+        <header className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-3">
+          <h2 className="flex min-w-0 items-center gap-2 text-base leading-6 font-medium text-foreground">
+            {Icon && <Icon size={17} className="shrink-0 text-muted-foreground" />}
+            <span className="min-w-0">{title}</span>
           </h2>
-          <div className="flex items-center gap-2">{actions}</div>
+          {actions && <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">{actions}</div>}
         </header>
       )}
-      <div className={bodyClass}>{children}</div>
+      <div className={bodyClass ?? (hasHeader ? 'px-4 pb-4' : 'p-4')}>{children}</div>
     </section>
   )
 }
 
 export function Hash({ value, length = 12, className = '' }) {
-  const [copied, setCopied] = useState(false)
-  if (!value) return <span className="text-slate-400">-</span>
-  return (
-    <button
-      type="button"
-      title={`${value}\n(click to copy)`}
-      onClick={() => {
-        navigator.clipboard?.writeText(value)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1200)
-      }}
-      className={`inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-700 hover:bg-slate-200 ${className}`}
-    >
-      {value.slice(0, length)}…{copied ? <CheckCircle2 size={11} className="text-emerald-600" /> : <Copy size={11} className="text-slate-400" />}
-    </button>
-  )
+  if (!value) return <span className="text-muted-foreground">-</span>
+  return <CopyToast value={value} display={`${value.slice(0, length)}…`} className={className} />
 }
 
 const ALERT_TONES = {
-  info: ['border-cyan-200 bg-cyan-50 text-cyan-900', Info],
-  success: ['border-emerald-200 bg-emerald-50 text-emerald-900', CheckCircle2],
-  warn: ['border-amber-200 bg-amber-50 text-amber-900', AlertTriangle],
-  error: ['border-rose-200 bg-rose-50 text-rose-900', XCircle],
+  info: ['border-border bg-muted/50 text-foreground', Info, 'text-sky-600 dark:text-sky-400'],
+  success: ['border-emerald-500/25 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200', CheckCircle2, ''],
+  warn: ['border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200', AlertTriangle, ''],
+  error: ['border-rose-500/30 bg-rose-500/10 text-rose-900 dark:text-rose-200', XCircle, ''],
 }
 
+// Entrance uses the blur/scale swap from Watermelon UI's Inline Toast.
 export function Alert({ tone = 'info', title, children, className = '' }) {
-  const [style, Icon] = ALERT_TONES[tone]
+  const [style, Icon, iconClass] = ALERT_TONES[tone]
   return (
-    <div className={`flex gap-2 rounded-lg border px-3 py-2 text-sm ${style} ${className}`}>
-      <Icon size={18} className="mt-0.5 shrink-0" />
+    <motion.div
+      initial={{ opacity: 0, filter: 'blur(4px)', scale: 0.98 }}
+      animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+      transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+      className={cn('flex gap-2.5 rounded-lg border px-3 py-2.5 text-sm', style, className)}
+    >
+      <Icon size={17} className={cn('mt-0.5 shrink-0', iconClass)} />
       <div className="min-w-0">
-        {title && <div className="font-semibold">{title}</div>}
-        {children && <div className="break-words">{children}</div>}
+        {title && <div className="font-medium">{title}</div>}
+        {children && <div className="break-words opacity-90">{children}</div>}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -168,7 +176,7 @@ export function fmtDuration(totalSeconds) {
   return `${Math.floor(s / 3600)}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m`
 }
 
-/** Live countdown to condemnation for a batch with an open excursion window. */
+/** Live countdown to condemnation for a batch with an open excursion window (Watermelon Labeled Progress). */
 export function ExcursionCountdown({ batch }) {
   useNow(1000) // re-render every second; read the clock directly because hidden tabs throttle timers
   const now = Date.now()
@@ -178,29 +186,17 @@ export function ExcursionCountdown({ batch }) {
   const remaining = ex.condemnAfterSeconds - elapsed
   const pct = Math.min(100, Math.max(0, (elapsed / ex.condemnAfterSeconds) * 100))
   const condemned = batch.status === 'CONDEMNED'
-  return (
-    <div className="mt-1.5">
-      <div className="flex justify-between text-[11px] text-slate-600">
-        <span>
-          {ex.type} excursion for <b>{fmtDuration(elapsed)}</b> (peak {ex.peakTemperatureC} °C)
-        </span>
-        <span>
-          {condemned ? 'condemned' : remaining > 0 ? <>condemns in <b>{fmtDuration(remaining)}</b></> : 'condemn threshold reached - awaiting worker'}
-        </span>
-      </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200">
-        <div className={`h-full ${condemned || pct >= 100 ? 'bg-rose-500' : 'bg-amber-500'}`} style={{ width: `${pct}%` }} />
-      </div>
-      <div className="mt-0.5 text-[10px] text-slate-500">
-        threshold {fmtDuration(ex.condemnAfterSeconds)} under {batch.policyCode}
-        {batch.policyDemoOnly ? ' (demo-only, compressed time)' : ''}
-      </div>
-    </div>
-  )
+  const end = condemned ? 'condemned' : remaining > 0 ? `condemns in ${fmtDuration(remaining)}` : 'threshold reached - awaiting worker'
+  const labels = [
+    `${ex.type} excursion for ${fmtDuration(elapsed)}`,
+    `peak ${ex.peakTemperatureC} °C`,
+    `threshold ${fmtDuration(ex.condemnAfterSeconds)} under ${batch.policyCode}${batch.policyDemoOnly ? ' (demo-only, compressed time)' : ''}`,
+  ]
+  return <LabeledProgress labels={labels} value={pct} tone={condemned || pct >= 100 ? 'danger' : 'warning'} end={end} />
 }
 
 export function Empty({ children }) {
-  return <div className="px-4 py-6 text-center text-sm text-slate-400">{children}</div>
+  return <div className="px-4 py-6 text-center text-sm text-muted-foreground">{children}</div>
 }
 
 export function roleLabel(role) {
@@ -210,6 +206,7 @@ export function roleLabel(role) {
       TRANSPORTER: 'Transporter',
       DISTRICT_OFFICER: 'District officer',
       AUDITOR: 'Auditor',
+      ADMIN: 'Administrator',
     }[role] || role
   )
 }
