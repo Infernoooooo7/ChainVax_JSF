@@ -58,6 +58,17 @@ public class LoggerDevice {
         }
     }
 
+    /** Admin console: move a logger to another site or change its description. */
+    public void update(Site site, String description) {
+        this.site = site;
+        this.description = description;
+    }
+
+    /** Admin console: rotate the device secret (stored only as a BCrypt hash). */
+    public void rotateSecret(String secretHash) {
+        this.secretHash = secretHash;
+    }
+
     public Long getId() {
         return id;
     }

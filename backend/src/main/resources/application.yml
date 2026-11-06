@@ -28,6 +28,10 @@ spring:
       repositories:
         enabled: false            # Redis is only a cache here; no Redis repositories to scan
 
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/admin-ui/   # admin console build lives in /admin-ui/admin
+
 server:
   port: ${CHAINVAX_PORT:8080}
 
@@ -41,6 +45,9 @@ springdoc:
     persist-authorization: true
 
 chainvax:
+  admin:                          # admin console account created at startup if none exists (demo values)
+    username: ${CHAINVAX_ADMIN_USER:admin}
+    password: ${CHAINVAX_ADMIN_PASSWORD:admin1234}
   jwt:
     # HS256 signing key (>= 32 bytes). Demo value only - override with CHAINVAX_JWT_SECRET.
     secret: ${CHAINVAX_JWT_SECRET:chainvax-demo-only-hs256-secret-change-me-0123456789}

@@ -41,6 +41,13 @@ public class Site {
         this.district = district;
     }
 
+    /** Admin console: edit a site. The code is immutable because ledger payloads reference it. */
+    public void update(String name, SiteType type, String district) {
+        this.name = name;
+        this.type = type;
+        this.district = district;
+    }
+
     public Long getId() {
         return id;
     }

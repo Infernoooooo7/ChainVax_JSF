@@ -9,6 +9,7 @@ import edu.nmamit.chainvax.demo.DemoDataSeeder;
 import edu.nmamit.chainvax.telemetry.LoggerDevice;
 import edu.nmamit.chainvax.telemetry.LoggerDeviceRepository;
 import edu.nmamit.chainvax.user.AppUser;
+import edu.nmamit.chainvax.common.ForbiddenActionException;
 import edu.nmamit.chainvax.user.AppUserRepository;
 import edu.nmamit.chainvax.user.CurrentUserService;
 import edu.nmamit.chainvax.user.Role;
@@ -75,6 +76,9 @@ public class AuthController {
         Authentication authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.username(), request.password()));
         AppUser user = users.findByUsername(authentication.getName()).orElseThrow();
+        if (user.getRole() == Role.ADMIN) {
+            throw new ForbiddenActionException("Administrator accounts sign in at /admin (the admin console), not the staff app.");
+        }
         return tokens.issueUserToken(user);
     }
 
@@ -98,6 +102,7 @@ public class AuthController {
             return List.of();
         }
         return users.findAllByOrderByIdAsc().stream()
+                .filter(u -> u.getRole() != Role.ADMIN)
                 .map(u -> new DemoUser(u.getUsername(), u.getFullName(), u.getRole().name(), u.siteCode(),
                         u.getSite() == null ? null : u.getSite().getName(), DemoDataSeeder.DEMO_PASSWORD,
                         summary(u.getRole())))

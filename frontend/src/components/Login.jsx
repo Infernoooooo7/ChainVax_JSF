@@ -112,6 +112,13 @@ export default function Login({ onLogin }) {
           <div className="mt-3">
             <ErrorAlert error={error} title="Sign-in failed" />
           </div>
+          <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+            Administrator? Accounts and master data are managed in the separate{' '}
+            <a className="font-medium text-cyan-700 hover:underline" href="/admin/">
+              admin console
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>

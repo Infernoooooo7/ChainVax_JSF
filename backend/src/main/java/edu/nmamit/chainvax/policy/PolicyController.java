@@ -59,7 +59,7 @@ public class PolicyController {
             BigDecimal coldAlarmC, int atRiskAfterSeconds, int heatCondemnAfterSeconds, int coldCondemnAfterSeconds,
             long version, String updatedBy, Instant updatedAt) {
 
-        static PolicyView of(ExcursionPolicy p) {
+        public static PolicyView of(ExcursionPolicy p) {
             return new PolicyView(p.getId(), p.getCode(), p.getName(), p.getBasis(), p.isDemoOnly(), p.getHeatAlarmC(),
                     p.getColdAlarmC(), p.getAtRiskAfterSeconds(), p.getHeatCondemnAfterSeconds(),
                     p.getColdCondemnAfterSeconds(), p.getVersion(), p.getUpdatedBy(), p.getUpdatedAt());

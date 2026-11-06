@@ -19,4 +19,12 @@ public interface BatchRepository extends JpaRepository<VaccineBatch, Long> {
     List<VaccineBatch> findByCurrentSiteIdAndProductOrderByExpiryDateAscIdAsc(Long siteId, String product);
 
     long countByStatus(BatchStatus status);
+
+    boolean existsByCurrentCustodian(String username);
+
+    boolean existsByBatchCode(String batchCode);
+
+    long countByCurrentSiteId(Long siteId);
+
+    long countByPolicyId(Long policyId);
 }

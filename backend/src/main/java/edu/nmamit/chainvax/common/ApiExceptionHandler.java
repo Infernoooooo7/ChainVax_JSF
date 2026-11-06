@@ -61,6 +61,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", ex.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    ProblemDetail inUse(org.springframework.dao.DataIntegrityViolationException ex) {
+        return problem(HttpStatus.CONFLICT, "IN_USE",
+                "This record is still referenced by other data (batches, staff, readings or ledger entries), so it cannot be deleted.");
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail illegalArgument(IllegalArgumentException ex) {
         return problem(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());

@@ -4,5 +4,7 @@ public enum Role {
     STOREKEEPER,
     TRANSPORTER,
     DISTRICT_OFFICER,
-    AUDITOR
+    AUDITOR,
+    /** Admin console only: manages accounts and master data; cannot perform operational actions. */
+    ADMIN
 }

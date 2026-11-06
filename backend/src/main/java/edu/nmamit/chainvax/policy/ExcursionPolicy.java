@@ -98,6 +98,13 @@ public class ExcursionPolicy {
                 + " s; at-risk after " + atRiskAfterSeconds + " s";
     }
 
+    /** Admin console: edit the descriptive fields of a policy. */
+    public void updateDescription(String name, String basis, boolean demoOnly) {
+        this.name = name;
+        this.basis = basis;
+        this.demoOnly = demoOnly;
+    }
+
     public Long getId() {
         return id;
     }

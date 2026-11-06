@@ -132,6 +132,20 @@ public class VaccineBatch {
         return status == BatchStatus.VIABLE && vialsOnHand > 0 && !expiryDate.isBefore(day);
     }
 
+    /**
+     * Admin console: correct registration details. Status, location, custodian and vials are NOT
+     * editable here - they only change through the lifecycle, custody and stock services.
+     */
+    public void correctDetails(String product, String lotNumber, String manufacturer, LocalDate expiryDate,
+            int dosesPerVial, ExcursionPolicy policy) {
+        this.product = product;
+        this.lotNumber = lotNumber;
+        this.manufacturer = manufacturer;
+        this.expiryDate = expiryDate;
+        this.dosesPerVial = dosesPerVial;
+        this.policy = policy;
+    }
+
     public Long getId() {
         return id;
     }

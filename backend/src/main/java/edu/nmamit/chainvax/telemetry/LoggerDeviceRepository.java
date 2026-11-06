@@ -10,4 +10,6 @@ public interface LoggerDeviceRepository extends JpaRepository<LoggerDevice, Long
     Optional<LoggerDevice> findByDeviceCode(String deviceCode);
 
     List<LoggerDevice> findAllByOrderByIdAsc();
+
+    long countBySiteId(Long siteId);
 }

@@ -1,0 +1,21 @@
+{
+  "name": "chainvax-admin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ChainVax admin console (react-admin) - separate login, CRUD on master data, read-only audit records",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "ra-data-simple-rest": "^5.15.5",
+    "react": "^19.3.1",
+    "react-admin": "^5.15.5",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.2.1",
+    "vite": "^8.3.5"
+  }
+}

@@ -4,6 +4,7 @@ frontend/dist/
 
 # Dependencies
 frontend/node_modules/
+admin/node_modules/
 
 # IDE / OS
 .idea/
@@ -17,3 +18,7 @@ Thumbs.db
 
 # NOTE: backend/src/main/resources/static/ (the built React UI) is committed on purpose,
 # so the backend can be built and run without Node.js. Rebuild it with: cd frontend && npm run build
+# Same for backend/src/main/resources/admin-ui/ (the admin console): cd admin && npm run build
+
+# Office lock files
+~$*

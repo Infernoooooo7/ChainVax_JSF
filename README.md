@@ -36,6 +36,26 @@ You need only a **JDK 17 or newer** on `PATH` (this was tested with JDK 25). No 
 
 Every start creates a **fresh in-process PostgreSQL 17 database** and re-seeds the demo data, so restarting resets the scenario. Set `CHAINVAX_PORT=9090` to use a different port.
 
+### Admin console (separate login)
+
+Open **http://localhost:8080/admin** and sign in as `admin` / `admin1234`. These are demo credentials. To change them, set `CHAINVAX_ADMIN_USER` / `CHAINVAX_ADMIN_PASSWORD` before the first start. The admin account cannot sign in to the staff app, and staff accounts cannot sign in here. They use separate login endpoints (`/api/admin/auth/login` vs `/api/auth/login`) and separate browser sessions.
+
+The console reuses **react-admin 5.15** ([marmelab/react-admin](https://github.com/marmelab/react-admin), MIT) and its own data provider **ra-data-simple-rest** (MIT). The backend implements that provider's REST contract under `/api/admin`: `sort`/`range`/`filter` query parameters and a `Content-Range` header (see `admin/AdminQuery.java`). Lists, forms, search, filters, sorting, paging, CSV export, the login page and the light/dark themes all come from react-admin.
+
+| Area | What the admin can do |
+|---|---|
+| User accounts | Create, edit (name, role, site, active), reset password, delete. Delete is refused for your own account, the last admin, or a user who currently holds stock. |
+| Sites | Create, edit, delete. Delete is refused while batches, staff or loggers are assigned. Site codes are immutable because the signed ledger references them. |
+| Logger devices | Register, move to another site, rotate the device secret (BCrypt), delete. Delete is refused once readings exist. |
+| Excursion policies | Create, edit, delete if unused. Edits are version-checked (`@Version`), need a reason, and are recorded as a `POLICY_CHANGE` override audit with before/after thresholds. |
+| Vaccine batches | Register at a district store, which appends a `REGISTERED` entry to the hash-chained ledger. Correct registration details. Full history per batch: ledger, lifecycle, excursions, overrides, stock issues. Batches are never deleted. |
+| Records (read-only) | Custody ledger with **Verify chain**, temperature readings, lifecycle events, excursions, override audit, stock issues, alert digests. All support search, filter, sort and CSV export. |
+| Dashboard | Live counts, ledger validity and head hash, the database and cache in use. |
+
+Admins cannot perform operational actions such as transfers, stock issue or releases, because all those endpoints are restricted to staff roles. Disabling an account blocks new sign-ins, but a token already issued stays valid until it expires (stateless JWT, demo limitation).
+
+Rebuild the console UI with `cd admin && npm install && npm run build`. The output goes to `backend/src/main/resources/admin-ui/` and is committed, like the staff UI. For dev mode, run `npm run dev` and open http://localhost:5174/admin/ (it proxies `/api` to :8080).
+
 ### Docker mode (PostgreSQL + Redis in containers)
 
 To inspect the data with a database tool (DBeaver, pgAdmin, IntelliJ Database): host `localhost`, port `5432`, database `chainvax`, user `chainvax`, password `chainvax` (local demo credentials from `docker-compose.yml`). Or run `docker exec -it chainvax-postgres-1 psql -U chainvax -d chainvax`.
@@ -210,7 +230,7 @@ Each item is in one of three states: **Done and verified** (exercised and checke
 | **Testcontainers** | `TestcontainersPostgresIntegrationTest` ran against a `postgres:17-alpine` container: migrations, seed and ledger verify passed |
 | Springdoc OpenAPI / Swagger UI | `/v3/api-docs`: 35 paths, `bearerAuth` scheme; `/swagger-ui.html` returns 200 |
 | React + Vite + Tailwind UI | `npm run build` (Vite 8); all 7 pages rendered in Chrome with no console errors; Vite dev server and proxy checked |
-| Maven, JUnit, Mockito, Testcontainers | `mvnw.cmd -B -o package`: **29 tests, 0 failures, 0 skipped** with Docker running (see section 6). Mockito is used in `StockServiceTest` |
+| Maven, JUnit, Mockito, Testcontainers | `mvnw.cmd -B -o test`: **34 tests, 0 failures, 0 skipped** with Docker running (see section 6), including 5 admin-console tests. Mockito is used in `StockServiceTest` |
 
 ### Implemented but not verified
 
@@ -231,7 +251,7 @@ Nothing remains in this state now that Docker is installed: Redis, the external 
 |---------|---------|
 | `cd frontend && npm install` | added 75 packages |
 | `cd frontend && npm run build` | Vite 8.3.5: 2433 modules → `backend/src/main/resources/static` |
-| `cd backend && mvnw.cmd -B -o package` | Without Docker: 29 run, 0 failures, 1 skipped. **With Docker (6 Nov): Tests run: 29, Failures: 0, Errors: 0, Skipped: 0** |
+| `cd backend && mvnw.cmd -B -o test` | Without Docker the Testcontainers test is skipped. **With Docker (6 Nov, after adding the admin console): Tests run: 34, Failures: 0, Errors: 0, Skipped: 0** |
 | `start-demo.cmd rebuild docker-reset` | Jar rebuilt; containers recreated and healthy; app on PostgreSQL 17.11 (Docker) + Redis; seeded; ledger valid |
 | `java -jar backend/target/chainvax.jar` | Started in 19–35 s (slower the first time); Flyway V1 and V2 applied; "Demo data seeded: 5 users, 3 sites, 3 loggers, 7 batches" |
 | `start-demo.cmd` and `start-demo.cmd rebuild` | Existing jar: started in 18 s. Rebuild: Maven Wrapper build succeeded, then started in 19 s |

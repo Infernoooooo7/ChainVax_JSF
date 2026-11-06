@@ -14,6 +14,9 @@ public final class Access {
 
     public static final String OFFICER = "hasRole('DISTRICT_OFFICER')";
 
+    /** Admin console: account and master-data management (separate login, no operational actions). */
+    public static final String ADMIN = "hasRole('ADMIN')";
+
     /** Device tokens issued to temperature loggers (and the simulator acting as one). */
     public static final String LOGGER = "hasRole('LOGGER')";
 

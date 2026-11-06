@@ -29,6 +29,7 @@ public class UserController {
     @GetMapping
     public List<StaffView> list() {
         return users.findAllByOrderByIdAsc().stream()
+                .filter(u -> u.getRole() != Role.ADMIN) // admin-console accounts are not staff
                 .map(u -> new StaffView(u.getUsername(), u.getFullName(), u.getRole().name(), u.siteCode()))
                 .toList();
     }

@@ -71,8 +71,8 @@ public class CustodyService {
         }
         AppUser receiver = users.findByUsername(command.toCustodian())
                 .orElseThrow(() -> new NotFoundException("No user " + command.toCustodian()));
-        if (receiver.getRole() == Role.AUDITOR) {
-            throw new BusinessRuleException("INVALID_CUSTODIAN", "Auditors cannot take custody of stock.");
+        if (receiver.getRole() == Role.AUDITOR || receiver.getRole() == Role.ADMIN) {
+            throw new BusinessRuleException("INVALID_CUSTODIAN", "Auditors and administrators cannot take custody of stock.");
         }
         if (receiver.getSite() != null && !receiver.isAssignedTo(to)) {
             throw new BusinessRuleException("INVALID_CUSTODIAN", receiver.getUsername() + " is assigned to "

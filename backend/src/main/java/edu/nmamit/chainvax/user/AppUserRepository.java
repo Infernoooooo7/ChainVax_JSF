@@ -10,4 +10,10 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByUsername(String username);
 
     List<AppUser> findAllByOrderByIdAsc();
+
+    boolean existsByRole(Role role);
+
+    long countByRoleAndEnabledTrue(Role role);
+
+    long countBySiteId(Long siteId);
 }

@@ -60,6 +60,19 @@ public class AppUser {
         return site == null ? null : site.getCode();
     }
 
+    /** Admin console: edit an account (username is immutable - it appears in audit history). */
+    public void updateAccount(String fullName, Role role, Site site, boolean enabled) {
+        this.fullName = fullName;
+        this.role = role;
+        this.site = site;
+        this.enabled = enabled;
+    }
+
+    /** Admin console: set a new BCrypt password hash. */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public Long getId() {
         return id;
     }
